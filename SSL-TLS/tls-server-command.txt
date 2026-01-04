@@ -1,0 +1,1 @@
+openssl s_server -cert ../PKI/server.crt -key ../PKI/server.key -CAfile ../PKI/ca.crt -accept 8443
