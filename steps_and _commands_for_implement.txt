@@ -1,0 +1,96 @@
+STEP 1: Create Project Folder
+
+Purpose:
+This step creates the main project directory and required subfolders to properly organize all cryptography components.
+
+Commands:
+mkdir Secure-Data-Exchange-Crypto
+cd Secure-Data-Exchange-Crypto
+mkdir PKI Encryption Digital-Signature SSL-TLS Documentation Documentation/Screenshots
+
+
+STEP 2: PKI (Public Key Infrastructure)
+
+Definition:
+Public Key Infrastructure (PKI) is a framework used to generate, manage, store, and validate digital certificates and cryptographic keys.
+It is mainly used for authentication, trust establishment, and secure communication.
+
+2.1 Create CA (Certificate Authority)
+
+Definition:
+A Certificate Authority (CA) is a trusted entity that issues and signs digital certificates.
+It verifies identities and ensures trust between communicating parties.
+
+Commands:
+cd PKI
+openssl genrsa -out ca.key 4096
+openssl req -x509 -new -nodes -key ca.key -sha256 -days 365 -out ca.crt
+
+
+2.2 Create Server Certificate
+
+Definition:
+A server certificate is used to identify a server and enable encrypted communication with clients.
+
+Commands:
+openssl genrsa -out server.key 2048
+openssl req -new -key server.key -out server.csr
+openssl x509 -req -in server.csr -CA ca.crt -CAkey ca.key -CAcreateserial -out server.crt -days 365 -sha256
+
+
+2.3 Create Client Certificate
+
+Definition:
+A client certificate is used to verify the identity of a client when connecting to a secure server.
+
+Commands:
+openssl genrsa -out client.key 2048
+openssl req -new -key client.key -out client.csr
+openssl x509 -req -in client.csr -CA ca.crt -CAkey ca.key -CAcreateserial -out client.crt -days 365 -sha256
+
+
+STEP 3: Symmetric Encryption (AES)
+
+Definition:
+AES (Advanced Encryption Standard) is a symmetric encryption algorithm used to protect sensitive data.
+The same secret key is used for both encryption and decryption.
+
+Commands:
+cd ../Encryption
+echo "This is confidential data for secure exchange" > plaintext.txt
+openssl enc -aes-256-cbc -salt -in plaintext.txt -out encrypted.txt
+openssl enc -aes-256-cbc -d -in encrypted.txt -out decrypted.txt
+
+
+STEP 4: Digital Signature
+
+Definition:
+A digital signature is a cryptographic technique that ensures message integrity and verifies the sender's identity.
+It also provides non-repudiation, meaning the sender cannot deny sending the message.
+
+Commands:
+cd ../Digital-Signature
+echo "This message must be authenticated" > message.txt
+sha256sum message.txt > hash.txt
+openssl dgst -sha256 -sign ../PKI/client.key -out signature.sig message.txt
+openssl dgst -sha256 -verify <(openssl x509 -in ../PKI/client.crt -pubkey -noout) -signature signature.sig message.txt
+
+
+STEP 5: SSL / TLS Secure Communication
+
+Definition:
+SSL/TLS is a security protocol used to encrypt data transmitted over a network.
+It ensures confidentiality, integrity, and authentication between the client and server.
+
+Commands:
+cd ../SSL-TLS
+
+TLS Server:
+openssl s_server -cert ../PKI/server.crt -key ../PKI/server.key -CAfile ../PKI/ca.crt -accept 8443
+
+TLS Client (new terminal):
+openssl s_client -connect localhost:8443 -cert ../PKI/client.crt -key ../PKI/client.key -CAfile ../PKI/ca.crt
+
+
+---END---
+
